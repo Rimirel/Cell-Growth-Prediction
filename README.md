@@ -17,10 +17,10 @@ This project develops and evaluates machine learning regression models to predic
 ## Environment
 
 The project uses Python and the following libraries. 
-- Python
-- NumPy 
-- pandas 
-- scikit-learn
+- Python 3.14.7
+- NumPy 2.5.2
+- pandas 3.0.5
+- scikit-learn 1.9.0
 
 
 ## Code Design
