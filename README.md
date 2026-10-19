@@ -16,8 +16,7 @@ This project develops and evaluates machine learning regression models to predic
 
 ## Environment
 
-The project uses Python and the following libraries. Replace the version placeholders with the versions installed in the environment used to run the project.
-
+The project uses Python and the following libraries. 
 - Python
 - NumPy 
 - pandas 
@@ -88,57 +87,35 @@ The separation of inputs, configuration, model creation, evaluation, and executi
 
 ### 1. Modeling Objective and Dataset
 
-Predicting specific growth rate is useful for understanding how environmental and nutrient conditions relate to cellular growth. In a bioprocess, temperature and pH influence cellular activity, while glucose availability and lactate accumulation can affect metabolism and growth. A predictive model can help identify patterns in these variables and support the analysis of operating conditions.
+This project predicts specific cell growth rate from temperature, pH, glucose concentration, and lactate concentration. The dataset contains 318 simulated observations. Since the target, `Specific Growth Rate [d^-1]`, is continuous, the task is a supervised regression problem.
 
-The dataset used in this project contains 318 observations and five columns. Four columns describe the input conditions: temperature in degrees Celsius, pH, glucose concentration in millimolar, and lactate concentration in millimolar. The fifth column is the specific growth rate in inverse days.
-
-The prediction task is a supervised regression problem because the target is a continuous numerical variable. The objective is to estimate the growth rate associated with a combination of process conditions rather than assign observations to predefined categories.
-
-The dataset is simulated. Consequently, the results demonstrate the behavior of the selected models on the available data, but they do not establish that the same performance will be achieved with experimental measurements or in an industrial bioreactor. The relationships learned by the models depend on the patterns, ranges, and assumptions represented in the dataset.
+The dataset is simulated, so the results show how the selected models perform on these data; they do not guarantee similar accuracy with experimental measurements or in an industrial bioreactor.
 
 ### 2. Model Selection and Hyperparameters
 
-Three algorithms were selected to compare different modeling strategies: polynomial regression, K-nearest neighbors regression, and Random Forest regression.
+Three regression algorithms were compared: Polynomial Regression, K-nearest neighbors (KNN), and Random Forest.
 
 #### Polynomial Regression
 
-Polynomial regression was implemented using degree-two polynomial features followed by linear regression. The transformation introduces squared terms and pairwise interactions between the original features. This allows the model to represent some nonlinear behavior while retaining a relatively simple mathematical structure.
-
-The degree was fixed at two to balance flexibility and simplicity. A higher degree could represent more complex patterns but could also introduce unnecessary complexity and increase the risk of overfitting. StandardScaler was included after polynomial feature generation so that the transformed features are placed on comparable scales. This is particularly relevant when feature magnitudes differ.
-
-The main advantage of polynomial regression is its ability to represent smooth quadratic relationships and interactions in a relatively interpretable form. However, its structure may be insufficient when growth behavior depends on more complex nonlinear relationships, thresholds, or interactions that cannot be adequately represented by a quadratic function.
+Polynomial Regression uses degree-two polynomial features followed by standardization and linear regression. The quadratic terms and pairwise interactions allow it to represent some nonlinear relationships while remaining relatively interpretable. However, a fixed quadratic structure may not capture more complex patterns.
 
 #### K-Nearest Neighbors Regression
 
-KNN predicts the growth rate of an observation using the target values of nearby training observations. The implementation uses five neighbors and distance-based weighting. Nearby observations therefore contribute more strongly to the prediction than observations farther away.
-
-StandardScaler is used because KNN relies on distances between observations. Without scaling, variables with larger numerical ranges could dominate the distance calculation, even when they are not biologically more important.
-
-Using five neighbors provides a compromise between relying on very few observations and averaging over a larger neighborhood. However, this value was specified rather than established through a comprehensive hyperparameter search. Different neighbor counts, distance metrics, or weighting schemes could change the results.
-
-KNN can represent local nonlinear relationships without requiring a predefined equation. Its limitations include sensitivity to feature scaling, the distribution of training observations, and the selected neighborhood size. Predictions may also become unreliable in regions where training observations are sparse.
+KNN uses five neighbors with distance-based weighting. Standardization is important because KNN relies on distances and the input variables have different scales. KNN can capture local nonlinear patterns, but its performance depends on the number of neighbors and the distribution of observations.
 
 #### Random Forest Regression
 
-Random Forest combines predictions from multiple decision trees. Each tree learns relationships between the input variables and growth rate, and the ensemble combines their predictions. This approach can represent nonlinear patterns and interactions without explicitly constructing polynomial terms.
+Random Forest combines 200 decision trees and uses a minimum leaf size of two observations. It can learn nonlinear relationships and interactions without explicitly specifying their form. However, it is less directly interpretable, and the chosen hyperparameters were not exhaustively optimized.
 
-The implementation uses 200 trees and a minimum leaf size of two observations. The ensemble size provides multiple trees for aggregation, while the minimum leaf size helps limit overly specific splits. A fixed random seed supports reproducibility.
-
-Random Forest is attractive for data containing nonlinear effects or interactions that are difficult to describe with a simple equation. However, its predictions are less directly interpretable than those of a low-degree polynomial model, and the selected settings do not guarantee optimal performance. Additional tuning would be needed to establish whether other values improve generalization.
+These settings provide a comparison of three different modeling approaches, rather than the best possible configuration of each algorithm.
 
 ### 3. Evaluation Metrics
 
-Model performance is evaluated using R², MAE, and RMSE. These metrics provide complementary information, so no single metric should be interpreted in isolation.
-
-R² measures predictive performance relative to a baseline that predicts the mean target value. A value closer to one generally indicates better performance, while a value near zero indicates performance similar to that baseline under the evaluation conditions. Negative values are also possible when predictions perform worse than the mean-based baseline.
-
-MAE represents the average magnitude of absolute prediction errors. RMSE also measures prediction error but penalizes larger deviations more strongly because errors are squared before averaging. Both metrics use the same units as the target, here days⁻¹, which makes their magnitudes easier to interpret.
-
-For R², higher values are preferred. For MAE and RMSE, lower values are preferred. Considering all three metrics provides a more balanced comparison, particularly when two models rank differently depending on the error measure.
+The models were assessed using R², mean absolute error (MAE), and root mean squared error (RMSE). Higher R² values generally indicate better performance, while lower MAE and RMSE indicate smaller prediction errors. MAE represents the average absolute error; RMSE gives relatively greater weight to larger errors. Both error metrics are expressed in the target's units, d⁻¹.
 
 ### 4. Independent Test-Set Results
 
-The dataset was split into training and testing subsets using an 80:20 ratio and a fixed random seed. The resulting test-set metrics are shown below.
+The dataset was divided into training and testing subsets using an 80:20 split.
 
 | Model | R² | MAE | RMSE |
 |---|---:|---:|---:|
@@ -146,17 +123,13 @@ The dataset was split into training and testing subsets using an 80:20 ratio and
 | Random Forest | 0.189904 | 0.115946 | 0.148410 |
 | KNN Regression | 0.176989 | 0.122969 | 0.149588 |
 
-Polynomial regression achieved the highest R² and the lowest RMSE on this particular test split. Its R² of approximately 0.221 indicates that it explains about 22% of the variation in the test-set target values relative to the mean-based baseline. This does not mean that 22% of individual predictions are correct.
+Polynomial Regression achieved the highest R² and lowest RMSE on this test split. Random Forest achieved the lowest MAE, approximately 0.116 d⁻¹. KNN had the lowest R² and the highest error values among the three models.
 
-Random Forest achieved the lowest MAE, at approximately 0.116 d⁻¹. Its RMSE was slightly higher than that of polynomial regression, suggesting that its overall error profile differs depending on how errors are weighted. KNN had the lowest R² and the highest MAE and RMSE among the three models in this test evaluation.
-
-The differences are relatively small in absolute error, and the R² values are modest. Therefore, the test results do not indicate that any model provides highly accurate predictions. They suggest that the models capture some information about growth rate, but a substantial amount of variation remains unexplained.
-
-The test-set ranking should also be interpreted cautiously because it is based on a single data split. A different split could change the relative performance of the models. This motivates the additional cross-validation analysis.
+The R² of Polynomial Regression (approximately 0.221) indicates that it explains about 22% of the variation in the test-set target relative to a mean-based baseline; it does not mean that 22% of predictions are correct. Overall, the R² values are modest, so substantial variation remains unexplained. These rankings also reflect one particular test split and may change with a different split.
 
 ### 5. Five-Fold Cross-Validation Results
 
-Five-fold cross-validation was used to evaluate the models over multiple train-validation splits. The mean results are shown below.
+Five-fold cross-validation was used to compare performance across multiple train-validation splits.
 
 | Model | Mean R² | Mean MAE | Mean RMSE |
 |---|---:|---:|---:|
@@ -164,64 +137,40 @@ Five-fold cross-validation was used to evaluate the models over multiple train-v
 | Polynomial Regression | 0.319398 | 0.124776 | 0.153748 |
 | KNN Regression | 0.287788 | 0.127696 | 0.156686 |
 
-Random Forest achieved the highest mean R², approximately 0.326. Polynomial regression ranked second on mean R² but obtained slightly lower mean MAE and RMSE than Random Forest. KNN had the weakest mean performance across all three metrics.
+Random Forest achieved the highest mean R², approximately 0.326. Polynomial Regression had slightly lower mean MAE and RMSE, while KNN had the weakest results across the three metrics. The differences between Random Forest and Polynomial Regression are small, and the preferred model depends partly on which metric is prioritized.
 
-The difference between Random Forest and polynomial regression is small. Random Forest explains more variation on average, while polynomial regression has a slight advantage in average prediction error. The preferred model therefore depends partly on whether explained variation or error magnitude is prioritized.
-
-The rankings differ from those obtained on the independent test set. Polynomial regression performed best in terms of R² and RMSE on that split, whereas Random Forest achieved the highest mean R² during cross-validation. This difference illustrates why evaluating models on multiple splits is valuable. It also means that the apparent winner should not be selected solely from the independent test results.
-
-Cross-validation provides a broader assessment of performance, but the reported mean metrics do not show the variability across folds. Reporting the standard deviation of each metric would provide additional information about stability. Moreover, because the hyperparameters were not exhaustively tuned, the results represent a comparison of the specified configurations rather than the best achievable performance of each algorithm.
+The rankings differ from the test-set comparison, showing why performance should not be judged from one split alone. Reporting the standard deviation across folds would provide additional information about stability. Since the hyperparameters were not extensively tuned, these results compare the selected configurations rather than each algorithm's maximum potential.
 
 ### 6. Comparison of Model Advantages and Limitations
 
-Polynomial regression offers a relatively simple structure and can represent quadratic relationships and pairwise interactions. It performed best on the independent test split according to R² and RMSE and had the lowest mean RMSE in cross-validation. These results make it a reasonable baseline and a competitive candidate when prediction error and simplicity are important. Its main limitation is that its fixed quadratic form may not capture more complicated growth behavior.
+Polynomial Regression is relatively simple and performed best on the test set in terms of R² and RMSE. It also had the lowest mean RMSE in cross-validation, but its quadratic form may not represent more complex growth behavior.
 
-Random Forest achieved the highest mean R² in cross-validation and the lowest MAE on the independent test set. It can learn nonlinear relationships and interactions without specifying their mathematical form in advance. However, it showed slightly higher RMSE than polynomial regression in both reported comparisons. Its performance could potentially be improved by tuning parameters such as tree depth, minimum samples per leaf, and the number of features considered at each split.
+Random Forest can capture nonlinear relationships and interactions. It achieved the highest mean R² in cross-validation and the lowest test-set MAE, although its RMSE was slightly higher than Polynomial Regression's. Tuning parameters such as tree depth and minimum leaf size may improve its performance.
 
-KNN provides a local, distance-based alternative. It can capture nonlinear patterns when similar observations have similar growth rates. However, it had the weakest performance in the current comparison. This may reflect the chosen number of neighbors, the structure of the dataset, the distance metric, or the difficulty of estimating growth rates in sparse regions. Further tuning would be required before concluding that KNN is inherently unsuitable for this problem.
+KNN offers a local, distance-based approach but performed least favorably with the selected configuration. Its performance may depend on the neighbor count, distance metric, feature scaling, and density of observations. Further tuning would be needed before drawing a firm conclusion about its suitability.
 
-Overall, polynomial regression and Random Forest are the most promising candidates among the configurations tested. The small differences between them and the modest R² values suggest that further validation and model improvement are needed before making a definitive selection.
+Overall, Polynomial Regression and Random Forest are the strongest candidates in this comparison, but their modest R² values indicate that neither model captures all the variation in growth rate.
 
 ### 7. Influence of Temperature, pH, Glucose, and Lactate
 
-Temperature, pH, glucose, and lactate are the four input variables used to predict specific growth rate. Each can plausibly relate to cellular growth, but the direction and magnitude of these relationships depend on the organism, medium, and operating conditions represented by the data.
+Temperature, pH, glucose, and lactate were selected because they can be relevant to cellular growth. Temperature and pH may have suitable operating ranges, with growth decreasing when conditions move away from them. Glucose supplies a carbon and energy source, but higher concentrations do not necessarily produce proportionally higher growth. Lactate accumulation may be associated with less favorable conditions in some systems, although its effect depends on the organism and process.
 
-Temperature affects reaction rates, enzyme activity, membrane function, and other cellular processes. Growth can increase as temperature approaches a suitable range, but performance may decline outside that range. Consequently, the relationship between temperature and growth rate may be nonlinear rather than consistently increasing.
-
-pH influences enzyme activity, nutrient transport, and cellular homeostasis. Cells generally have a range of pH conditions that supports growth, and deviations from this range can affect their performance. A model may capture an optimum-like relationship if the dataset contains sufficient observations across the relevant pH range.
-
-Glucose provides a carbon and energy source for many cell cultures. Increasing glucose availability can support growth when glucose is limiting, but the relationship may not remain positive at all concentrations. Depending on the system, high concentrations or associated metabolic effects can alter growth behavior.
-
-Lactate can be associated with cellular metabolism and may accumulate during cultivation. In some systems, elevated lactate is associated with less favorable growth conditions, although its effect depends on the organism and process context. It should not automatically be interpreted as having a negative effect in every observation.
-
-These biological considerations help motivate the choice of input variables, but they do not establish the actual effects learned from this dataset. The current workflow evaluates predictive performance; it does not yet calculate feature importance, partial dependence, or the direction of each variable's influence. Therefore, it would be premature to claim that a specific variable is the strongest predictor or that increasing or decreasing it always improves growth.
-
-A more detailed analysis could use permutation importance for Random Forest, model coefficients for polynomial regression, and controlled prediction plots across the observed ranges of each feature. Interactions should also be investigated because the effect of one variable may depend on the levels of the others. Such analyses would help distinguish patterns supported by the data from general biological expectations.
+The feature relationship plots show how each variable changes alongside measured growth rate, but they do not isolate the effect of one variable from the others. The current workflow does not calculate feature importance or establish causal relationships. Therefore, it cannot yet confirm which variable is the strongest predictor or specify how changing one variable will affect growth. Feature importance and controlled prediction plots could support a more detailed analysis.
 
 ### 8. High-Growth, Low-Growth, and Unreliable Predictions
 
-Conditions associated with high or low predicted growth should be identified using the dataset and the fitted models rather than assumed in advance. A practical approach is to rank observations by their measured growth rate, compare their input conditions, and inspect whether similar patterns appear in model predictions. This could reveal combinations of temperature, pH, glucose, and lactate associated with higher or lower growth in the available data.
+Conditions associated with high or low growth should be identified from the dataset and model predictions rather than assumed in advance. Ranking observations by measured growth rate and comparing their input conditions could reveal combinations associated with higher or lower growth in these simulated data. Such patterns would not automatically establish optimal conditions for a real biological process.
 
-However, such patterns should be interpreted within the range of the observations. A combination associated with high growth in the simulated dataset is not automatically an optimal condition for a real biological process. Confirmation would require relevant experimental evidence and knowledge of the underlying system.
-
-Predictions may be unreliable when the input conditions fall outside the ranges represented in the training data. This is especially important for KNN, which depends on nearby observations, and for tree-based models, which do not extrapolate smoothly beyond learned split regions. Polynomial regression can generate extrapolated values, but these may become unrealistic far outside the observed range.
-
-Predictions can also be uncertain when the dataset contains few examples for a particular combination of conditions, when relationships are highly variable, or when the model's errors are large. Since the current R² scores are modest, the predictions should be treated as estimates rather than precise measurements. A future version could report prediction errors, identify out-of-range inputs, and compare the stability of predictions across validation folds.
+Predictions may be unreliable for input combinations outside the ranges represented in the training data or where observations are sparse. KNN depends on nearby examples, Random Forest predictions are limited by the learned tree splits, and Polynomial Regression may produce unrealistic extrapolations far outside the observed range. Given the modest R² scores, predictions should be treated as estimates rather than precise measurements.
 
 ### 9. Practical Applications and Future Improvements
 
-A model that predicts specific growth rate from process conditions could eventually support preliminary process analysis, experimental planning, and screening of candidate operating conditions. For example, it could help identify combinations of temperature, pH, glucose, and lactate that merit further experimental investigation. It could also serve as a baseline for comparing more advanced predictive approaches.
+This type of model could support preliminary bioprocess analysis, experimental planning, and screening of operating conditions for further investigation. However, the current results are not sufficient for direct process-control decisions because the dataset is simulated, predictive performance is modest, and no independent experimental validation has been performed.
 
-Nevertheless, the present results are not sufficient to justify direct use for process control or operational decisions. The dataset is simulated, the models explain only a limited proportion of the target variation, and no external experimental validation has been performed. Any real-world use would require validation against data from the relevant organism and cultivation system.
-
-Several improvements could strengthen the analysis. First, hyperparameter tuning could be conducted using cross-validation on the training data, while keeping the test set untouched until final evaluation. Second, the cross-validation results could include standard deviations to show the variability of performance across folds. Third, residual plots and predicted-versus-observed plots could reveal systematic errors, extreme deviations, or regions where predictions are less accurate.
-
-Feature importance and partial dependence analysis could help investigate how the four input variables influence model predictions. Additional algorithms could also be tested, provided that their performance is assessed using the same evaluation strategy. Finally, validation on independent experimental data would be necessary to determine whether the observed relationships generalize beyond the simulated dataset.
+Future improvements could include tuning hyperparameters through cross-validation on the training data while reserving the test set for final evaluation, reporting cross-validation variability, and examining residuals for systematic errors. Feature-importance analysis and prediction plots could help investigate the roles of the four input variables. Most importantly, validation with independent experimental data would be required before applying the models to a real cultivation system.
 
 ### 10. Conclusion
 
-This project compared polynomial regression, KNN regression, and Random Forest regression for predicting specific cell growth rate from four process variables. Polynomial regression achieved the best R² and RMSE on the independent test split, while Random Forest achieved the highest mean R² in five-fold cross-validation and the lowest MAE on the test set. Polynomial regression had slightly lower mean MAE and RMSE during cross-validation.
+Polynomial Regression achieved the best test-set R² and RMSE, while Random Forest achieved the highest mean R² in cross-validation and the lowest test-set MAE. Polynomial Regression had slightly lower mean MAE and RMSE during cross-validation. KNN performed less favorably with the selected settings.
 
-The results show that the choice of model depends on the evaluation metric and data split. Both polynomial regression and Random Forest are reasonable candidates for further investigation, while KNN performed less favorably with the selected configuration. However, all three models achieved modest R² values, indicating that substantial variation in growth rate remains unexplained.
-
-Further hyperparameter optimization, residual analysis, feature-effect investigation, and validation on independent experimental data are recommended before using the models for practical bioprocess decisions.
+The results show that model ranking depends on the evaluation metric and data split. Polynomial Regression and Random Forest are reasonable candidates for further investigation, but the modest R² values indicate that substantial variation remains unexplained. Hyperparameter tuning, further error analysis, and validation on independent experimental data are recommended before practical use.
